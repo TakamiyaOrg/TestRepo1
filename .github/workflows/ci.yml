@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.ref }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: "1" # make mocha output colorful
+  PRETTIER_LEGACY_CLI: "1" # https://github.com/prettier/prettier/issues/15832
+  # https://docs.github.com/en/actions/learn-github-actions/environment-variables
+  # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+  WSLENV: HOSTNAME:CI:FORCE_COLOR:GITHUB_ACTION:GITHUB_ACTION_PATH/p:GITHUB_ACTION_REPOSITORY:GITHUB_WORKFLOW:GITHUB_WORKSPACE/p:GITHUB_PATH/p:GITHUB_ENV/p:VIRTUAL_ENV/p
+  # We define a hostname because otherwise the variable might not always be accessible on runners.
+  HOSTNAME: gha
+
+jobs:
+  git-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: git
+        run: |
+          # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
+          git --version
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git status
+          git tag
+          git describe
